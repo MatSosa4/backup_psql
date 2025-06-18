@@ -7,14 +7,24 @@ container_name = "postgres_container"
 db_user = "root"
 db_name = "plus"
 backup_dir = "./backups"
+backup_data_dir = os.path.join(backup_dir, "data")
+
+max_num_files = 7
 
 os.makedirs(backup_dir, exist_ok=True)  # ./backups
-os.makedirs(f"{backup_dir}/data", exist_ok=True)  # ./backups/data
+os.makedirs(backup_data_dir, exist_ok=True)  # ./backups/data
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 schema_file = f"{backup_dir}/schema.sql"
-data_file   = f"{backup_dir}/data/{db_name}_data_{timestamp}.sql"
+data_file   = f"{backup_data_dir}/{db_name}_data_{timestamp}.sql"
+
+saved_files = [os.path.join(backup_data_dir, f) for f in os.listdir(backup_data_dir) if os.path.isfile(os.path.join(backup_data_dir, f))]
+saved_files.sort(key=os.path.getmtime, reverse=True)
+
+for f in saved_files[max_num_files - 1:]:
+  os.remove(f)
+  print(f"Deleted old backup: {os.path.basename(f)}")
 
 # Only Structure
 command_schema = [
